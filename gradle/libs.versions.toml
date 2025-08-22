@@ -1,0 +1,18 @@
+[versions]
+compose-multiplatform = "1.7.0"
+kotlin = "2.1.0"
+serialization = "1.8.0"
+pf4j = "3.6.0"
+rssparser = "6.0.2"
+
+[libraries]
+pf4j = { group = "org.pf4j", name = "pf4j", version.ref = "pf4j" }
+holonet-core = { group = "dk.holonet", name = "core", version = "0.0.1" }
+serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
+rssparser = { group = "com.prof18.rssparser", name = "rssparser", version.ref = "rssparser" }
+
+[plugins]
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+
