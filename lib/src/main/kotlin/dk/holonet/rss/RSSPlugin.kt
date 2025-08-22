@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
@@ -15,8 +14,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -24,17 +21,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.dshatz.composempp.AutoSizeText
 import com.prof18.rssparser.RssParser
 import dk.holonet.core.HoloNetModule
 import dk.holonet.core.HoloNetPlugin
 import dk.holonet.core.ModuleConfiguration
+import dk.holonet.core.asList
 import dk.holonet.rss.feed.FeedRepository
+import dk.holonet.rss.util.AutoSizeText
 import org.koin.core.component.inject
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -64,24 +62,18 @@ class RSSPlugin(wrapper: PluginWrapper) : HoloNetPlugin(wrapper) {
             val state = viewModel.currentItem.collectAsState()
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center
             ) {
                 AnimatedContent(
-                    targetState = state.value,
-                    transitionSpec = {
+                    targetState = state.value, transitionSpec = {
                         fadeIn(animationSpec = tween(animationSpeed.value)) + slideInHorizontally(
-                            animationSpec = tween(animationSpeed.value),
-                            initialOffsetX = { it / 2 }
-                        ) togetherWith fadeOut(animationSpec = tween(animationSpeed.value)) + slideOutHorizontally(
-                            animationSpec = tween(animationSpeed.value),
-                            targetOffsetX = { -it / 2}
-                        )
-                    }
-                ) { currentItem ->
+                            animationSpec = tween(animationSpeed.value), initialOffsetX = { it / 2 }) togetherWith fadeOut(
+                            animationSpec = tween(animationSpeed.value)
+                        ) + slideOutHorizontally(
+                            animationSpec = tween(animationSpeed.value), targetOffsetX = { -it / 2 })
+                    }) { currentItem ->
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(16.dp, 0.dp)
+                        horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp, 0.dp)
                     ) {
                         val title = currentItem?.title ?: return@AnimatedContent
                         val origin = currentItem.origin
@@ -100,7 +92,7 @@ class RSSPlugin(wrapper: PluginWrapper) : HoloNetPlugin(wrapper) {
                             text = origin,
                             style = MaterialTheme.typography.overline,
                             textAlign = TextAlign.Center,
-                            fontSize = 24.sp
+                            fontSize = 24.sp, color = Color.Gray
                         )
 
                         Spacer(Modifier.height(4.dp))
@@ -110,7 +102,8 @@ class RSSPlugin(wrapper: PluginWrapper) : HoloNetPlugin(wrapper) {
                             minTextSize = 16.sp,
                             maxTextSize = 32.sp,
                             style = MaterialTheme.typography.h4.copy(textAlign = TextAlign.Center),
-                            alignment= Alignment.Center,
+                            alignment = Alignment.Center,
+                            color = Color.White
                         )
                     }
                 }
@@ -119,8 +112,22 @@ class RSSPlugin(wrapper: PluginWrapper) : HoloNetPlugin(wrapper) {
 
         override fun configure(configuration: ModuleConfiguration?) {
             super.configure(configuration)
-            viewModel.loadFeed("https://www.dr.dk/nyheder/service/feeds/senestenyt")
-            viewModel.startEmittingFeeds()
+
+            var feeds: List<String>? = null
+
+            configuration?.config?.let { props ->
+                props["feeds"]?.let {
+                    feeds = it.asList<String>()
+                }
+            }
+
+            feeds?.let {
+                it.forEach { feed ->
+                    viewModel.loadFeed(feed)
+                }
+
+                viewModel.startEmittingFeeds()
+            } ?: println("No Feeds provided")
         }
     }
 }

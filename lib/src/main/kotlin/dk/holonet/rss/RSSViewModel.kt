@@ -62,7 +62,7 @@ class RSSViewModel(
 
     fun loadFeed(feedUrl: String) {
         viewModelScope.launch {
-            val feed = feedRepository.getFeed("https://www.dr.dk/nyheder/service/feeds/senestenyt")
+            val feed = feedRepository.getFeed(feedUrl)
             feeds.add(feed)
         }
     }
