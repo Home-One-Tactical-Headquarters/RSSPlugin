@@ -30,7 +30,9 @@ import com.prof18.rssparser.RssParser
 import dk.holonet.core.HoloNetModule
 import dk.holonet.core.HoloNetPlugin
 import dk.holonet.core.ModuleConfiguration
+import dk.holonet.core.asInt
 import dk.holonet.core.asList
+import dk.holonet.core.asString
 import dk.holonet.rss.feed.FeedRepository
 import dk.holonet.rss.util.AutoSizeText
 import org.koin.core.component.inject
@@ -101,6 +103,7 @@ class RSSPlugin(wrapper: PluginWrapper) : HoloNetPlugin(wrapper) {
                             text = title,
                             minTextSize = 16.sp,
                             maxTextSize = 32.sp,
+                            stepGranularityTextSize = 2.sp,
                             style = MaterialTheme.typography.h4.copy(textAlign = TextAlign.Center),
                             alignment = Alignment.Center,
                             color = Color.White
@@ -114,10 +117,23 @@ class RSSPlugin(wrapper: PluginWrapper) : HoloNetPlugin(wrapper) {
             super.configure(configuration)
 
             var feeds: List<String>? = null
+            var updateFrequency = 5000 // Default to 5 seconds
+            var selectionStrategy: RSSViewModel.SelectionStrategy =
+                RSSViewModel.SelectionStrategy.RANDOM
 
             configuration?.config?.let { props ->
                 props["feeds"]?.let {
                     feeds = it.asList<String>()
+                }
+                props["frequency"]?.let {
+                    updateFrequency = it.asInt()
+                }
+                props["selectionStrategy"]?.let {
+                    selectionStrategy = try {
+                        RSSViewModel.SelectionStrategy.valueOf(it.asString().uppercase())
+                    } catch (e: IllegalArgumentException) {
+                        RSSViewModel.SelectionStrategy.RANDOM
+                    }
                 }
             }
 
@@ -126,7 +142,10 @@ class RSSPlugin(wrapper: PluginWrapper) : HoloNetPlugin(wrapper) {
                     viewModel.loadFeed(feed)
                 }
 
-                viewModel.startEmittingFeeds()
+                viewModel.startEmittingFeeds(
+                    intervalMillis = updateFrequency,
+                    strategy = selectionStrategy
+                )
             } ?: println("No Feeds provided")
         }
     }

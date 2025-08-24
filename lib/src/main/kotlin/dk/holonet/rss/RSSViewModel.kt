@@ -28,7 +28,7 @@ class RSSViewModel(
     }
 
     fun startEmittingFeeds(
-        intervalMillis: Long = 5000L, // Default to 5 seconds
+        intervalMillis: Int = 5000, // Default to 5 seconds
         strategy: SelectionStrategy = SelectionStrategy.RANDOM
     ) {
         if (isEmitting) return // Prevent multiple emissions
@@ -46,7 +46,7 @@ class RSSViewModel(
                 val nextItem =selectNextItem(strategy)
                 nextItem?.let {
                     _currentItem.emit(it)
-                    delay(intervalMillis)
+                    delay(intervalMillis.toLong())
                 }
 
                 if (emittedItems.size >= allItems.size) {
