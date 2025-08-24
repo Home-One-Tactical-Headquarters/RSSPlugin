@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.isSpecified
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastAll
 import androidx.compose.ui.util.fastCoerceAtLeast
 import androidx.compose.ui.util.fastFilter
@@ -216,16 +217,28 @@ fun AutoSizeText(
                 },
             )
 
+            val safeLineSpacingRatio = when {
+                !lineSpacingRatio.isFinite() || lineSpacingRatio < 1f -> 1.2f // Default line spacing
+                lineSpacingRatio > 10f -> 10f // Cap at reasonable maximum
+                else -> lineSpacingRatio
+            }
+
             val layoutDirection = LocalLayoutDirection.current
             val fontFamilyResolver = LocalFontFamilyResolver.current
             val textMeasurer = rememberTextMeasurer()
             val coercedLineSpacingRatio = lineSpacingRatio.takeIf { it.isFinite() && it >= 1 } ?: 1F
-            val shouldMoveBackward: (TextUnit) -> Boolean = {
+            val shouldMoveBackward: (TextUnit) -> Boolean = { fontSize ->
+                val lineHeight = if (fontSize.isSp && fontSize.value > 0) {
+                    fontSize * safeLineSpacingRatio
+                } else {
+                    16.sp
+                }
+
                 shouldShrink(
                     text = text,
                     textStyle = combinedTextStyle.copy(
-                        fontSize = it,
-                        lineHeight = it * coercedLineSpacingRatio,
+                        fontSize = fontSize,
+                        lineHeight = lineHeight
                     ),
                     maxLines = maxLines,
                     layoutDirection = layoutDirection,
@@ -287,7 +300,11 @@ fun AutoSizeText(
                 onTextLayout = onTextLayout,
                 style = combinedTextStyle.copy(
                     fontSize = electedFontSize,
-                    lineHeight = electedFontSize * coercedLineSpacingRatio,
+                    lineHeight = if (electedFontSize.isSp && electedFontSize.value > 0) {
+                        electedFontSize * safeLineSpacingRatio
+                    } else {
+                        TextUnit.Unspecified
+                    }
                 ),
             )
         }
